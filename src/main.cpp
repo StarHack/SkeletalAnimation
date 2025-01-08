@@ -256,8 +256,6 @@ int main()
 		glUniform3fv(glGetUniformLocation(shader.ID, "camPos"), 1, glm::value_ptr(cameraPos));
 
 		glUniformMatrix4fv(glGetUniformLocation(shader.ID, "lightSpaceMatrix"), 1, GL_FALSE, glm::value_ptr(lightSpaceMatrix));
-		glActiveTexture(GL_TEXTURE3);
-		glBindTexture(GL_TEXTURE_2D, depthMap);
 
 		GLint texSamplerLoc = glGetUniformLocation(shader.ID, "texSampler");
 		glUniform1i(texSamplerLoc, 0); // Map to texture unit 0
@@ -270,6 +268,9 @@ int main()
 
 		GLint shadowSamplerLoc = glGetUniformLocation(shader.ID, "shadowSampler");
 		glUniform1i(shadowSamplerLoc, 3); // Map to texture unit 3
+
+		glActiveTexture(GL_TEXTURE3);
+		glBindTexture(GL_TEXTURE_2D, depthMap);
 
 		renderNode(root, glGetUniformLocation(shader.ID, "M"), glGetUniformLocation(shader.ID, "type"));
 
