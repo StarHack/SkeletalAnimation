@@ -1,10 +1,10 @@
-#version 430 core
+#version 410 core
 layout (location = 0) in vec3 aPos;
 layout (location = 5) in ivec4 boneIds; 
 layout (location = 6) in vec4 weights;
 
-layout (location = 1) uniform mat4 lightSpaceMatrix;
-layout (location = 0) uniform mat4 model;
+uniform mat4 lightSpaceMatrix;
+uniform mat4 model;
 layout (location = 4) uniform uint type;
 
 const int MAX_BONES = 100;

@@ -1,4 +1,4 @@
-#version 430 core
+#version 410 core
 
 in vec3 normal;
 in vec3 FragPos;
@@ -8,9 +8,9 @@ in vec3 bitangents;
 
 out vec4 FragColor;
 
-layout (location = 3) uniform vec3 camPos;
+uniform vec3 camPos;
 layout (location = 4) uniform uint type;
-layout (location = 5) uniform mat4 lightSpaceMatrix;
+uniform mat4 lightSpaceMatrix;
 
 layout (binding = 0) uniform sampler2D texSampler;
 layout (binding = 1) uniform sampler2D normSampler;
