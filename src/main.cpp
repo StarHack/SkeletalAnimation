@@ -15,11 +15,11 @@
 #include "animation.hpp"
 #include "animator.hpp"
 
-void framebuffer_size_callback(GLFWwindow* window, int width, int height);
-void processInput(GLFWwindow* window, Animation* animations);
-void mouse_callback(GLFWwindow* window, double xpos, double ypos);
-void renderNode(Node* node);
-void updateNodeTransformations(Node* node, glm::mat4 transformationThusFar);
+void framebuffer_size_callback(GLFWwindow *window, int width, int height);
+void processInput(GLFWwindow *window, Animation *animations);
+void mouse_callback(GLFWwindow *window, double xpos, double ypos);
+void renderNode(Node *node, unsigned int model_shader_location, unsigned int type_shader_location);
+void updateNodeTransformations(Node *node, glm::mat4 transformationThusFar);
 void setUniformBoneTransforms(std::vector<glm::mat4> transforms, unsigned int shaderId);
 
 bool VSYNC = true;
@@ -43,8 +43,8 @@ float deltaTime = 0.0f;
 
 Animator animator = Animator();
 
-Node* checkerFloor = createSceneNode();
-Node* character = createSceneNode();
+Node *checkerFloor = createSceneNode();
+Node *character = createSceneNode();
 
 int main()
 {
@@ -52,7 +52,7 @@ int main()
 	glfwInit();
 	// Define OpenGL version
 	glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, 4);
-	glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, 6);
+	glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, 1);
 	// Define usage of Core
 	glfwWindowHint(GLFW_OPENGL_PROFILE, GLFW_OPENGL_CORE_PROFILE);
 
@@ -60,7 +60,7 @@ int main()
 	glfwWindowHint(GLFW_SAMPLES, 4);
 
 	// Create window with GLFW
-	GLFWwindow* window = glfwCreateWindow(WINDOW_WIDTH, WINDOW_HEIGHT, "Project", FULLSCREEN ? glfwGetPrimaryMonitor() : NULL, NULL);
+	GLFWwindow *window = glfwCreateWindow(WINDOW_WIDTH, WINDOW_HEIGHT, "Project", FULLSCREEN ? glfwGetPrimaryMonitor() : NULL, NULL);
 	if (window == NULL)
 	{
 		std::cout << "Failed to create GLFW window" << std::endl;
@@ -78,7 +78,7 @@ int main()
 	glfwSetFramebufferSizeCallback(window, framebuffer_size_callback);
 
 	// Disable mouse
-	//glfwSetInputMode(window, GLFW_CURSOR, GLFW_CURSOR_DISABLED);
+	// glfwSetInputMode(window, GLFW_CURSOR, GLFW_CURSOR_DISABLED);
 
 	// Check if glad managed to load opengl, and only then continue using gl functions
 	if (!gladLoadGLLoader((GLADloadproc)glfwGetProcAddress))
@@ -107,12 +107,11 @@ int main()
 	if (!VSYNC)
 		glfwSwapInterval(0);
 
-
 	string daeFile = "../res/aj/aj.dae";
-	//string daeFile = "../res/DanceMoves2.FBX";
-	//string daeFile = "../res/vampire/dancing_vampire.dae";
-	//string daeFile = "../res/person/model.dae";
-	//string daeFile = "../res/maven/Maven.dae";
+	// string daeFile = "../res/DanceMoves2.FBX";
+	// string daeFile = "../res/vampire/dancing_vampire.dae";
+	// string daeFile = "../res/person/model.dae";
+	// string daeFile = "../res/maven/Maven.dae";
 
 	string animFile1 = "../res/aj/breathing_idle.dae";
 	string animFile2 = "../res/aj/walking.dae";
@@ -122,17 +121,15 @@ int main()
 	string animFile6 = "../res/aj/jump.dae";
 
 	vector<TextureOverride> overrides = {
-		{ 0, DIFFUSE, "textures/Boy01_diffuse.jpg" },
-		{ 0, NORMAL, "textures/Boy01_normal.jpg" },
-		{ 0, SPECULAR, "textures/Boy01_spec.jpg" }
-	};
-
+		{0, DIFFUSE, "textures/Boy01_diffuse.jpg"},
+		{0, NORMAL, "textures/Boy01_normal.jpg"},
+		{0, SPECULAR, "textures/Boy01_spec.jpg"}};
 
 	Model m = Model(daeFile, overrides);
 	vector<Mesh> squareMeshes = m.meshes;
 	std::cout << "Loaded meshes: " << m.meshes.size() << std::endl;
 
-	Node* root = createSceneNode();
+	Node *root = createSceneNode();
 	root->type = ROOT;
 
 	Mesh floorMesh;
@@ -148,25 +145,26 @@ int main()
 		glm::vec3(0.0f, 1.0f, 0.0f),
 		glm::vec3(0.0f, 1.0f, 0.0f),
 	};
-	floorMesh.indices = { 0, 1, 2, 2, 3, 0 };
+	floorMesh.indices = {0, 1, 2, 2, 3, 0};
 
-	unsigned int floorVAO = generateBuffer(floorMesh);
+	Shader shader = Shader("../src/shaders/default.vert", "../src/shaders/default.frag");
+	Shader depthShader = Shader("../src/shaders/depth.vert", "../src/shaders/depth.frag");
+
+	unsigned int floorVAO = generateBuffer(floorMesh, shader.ID); // ???
 
 	checkerFloor->type = GEOMETRY;
-	checkerFloor->vertexArrayObjectIDs = { (int)floorVAO };
-	checkerFloor->VAOIndexCounts = { (unsigned int)floorMesh.indices.size() };
+	checkerFloor->vertexArrayObjectIDs = {(int)floorVAO};
+	checkerFloor->VAOIndexCounts = {(unsigned int)floorMesh.indices.size()};
 	addChild(root, checkerFloor);
-
-
 
 	character->type = CHARACTER;
 	character->scale = glm::vec3(0.01, 0.01, 0.01);
-	//character->scale = glm::vec3(0.1, 0.1, 0.1);
-	//character->rotation = glm::vec3(-3.14 / 2.0, 0.0, 0.0);
+	// character->scale = glm::vec3(0.1, 0.1, 0.1);
+	// character->rotation = glm::vec3(-3.14 / 2.0, 0.0, 0.0);
 
 	for (int i = 0; i < m.meshes.size(); i++)
 	{
-		unsigned int charVAO = generateBuffer(squareMeshes[i]);
+		unsigned int charVAO = generateBuffer(squareMeshes[i], shader.ID); // ???
 		character->vertexArrayObjectIDs.push_back(charVAO);
 		character->VAOIndexCounts.push_back(squareMeshes[i].indices.size());
 
@@ -184,10 +182,7 @@ int main()
 	Animation anim5(animFile5, &m);
 	Animation anim6(animFile6, &m);
 
-	Animation animations[] = { anim1, anim2, anim3, anim4, anim5, anim6 };
-
-	Shader shader = Shader("../src/shaders/default.vert", "../src/shaders/default.frag");
-	Shader depthShader = Shader("../src/shaders/depth.vert", "../src/shaders/depth.frag");
+	Animation animations[] = {anim1, anim2, anim3, anim4, anim5, anim6};
 
 	// Render loop
 	float frameTime = 1.0f / FPS;
@@ -220,8 +215,6 @@ int main()
 
 		auto transforms = animator.getFinalBoneMatrices();
 
-
-
 		// ----------------- Shadow ---------------
 		glCullFace(GL_FRONT);
 		glm::mat4 lightProjection = glm::perspective(glm::radians(fov), (float)s_width / (float)s_height, 0.1f, 100.0f);
@@ -233,14 +226,14 @@ int main()
 
 		setUniformBoneTransforms(transforms, depthShader.ID);
 
-		glUniformMatrix4fv(1, 1, GL_FALSE, glm::value_ptr(lightSpaceMatrix));
+		glUniformMatrix4fv(glGetUniformLocation(depthShader.ID, "lightSpaceMatrix"), 1, GL_FALSE, glm::value_ptr(lightSpaceMatrix));
 
 		glClearColor(0.5f, 1.0f, 0.5f, 1.0f);
 		glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 		glViewport(0, 0, s_width, s_height);
 		glBindFramebuffer(GL_FRAMEBUFFER, depthFBO);
 		glClear(GL_DEPTH_BUFFER_BIT);
-		renderNode(root);
+		renderNode(root, glGetUniformLocation(depthShader.ID, "model"), glGetUniformLocation(depthShader.ID, "type"));
 		glBindFramebuffer(GL_FRAMEBUFFER, 0);
 
 		glCullFace(GL_BACK);
@@ -258,15 +251,28 @@ int main()
 		glm::mat4 projection = glm::perspective(glm::radians(fov), (float)WINDOW_WIDTH / (float)WINDOW_HEIGHT, 0.1f, 100.0f);
 		glm::mat4 view = glm::lookAt(cameraPos, character->position + glm::vec3(0.0f, 1.0f, 0.0f), cameraUp); // cameraPos + cameraFront
 
-		glUniformMatrix4fv(1, 1, GL_FALSE, glm::value_ptr(view));
-		glUniformMatrix4fv(2, 1, GL_FALSE, glm::value_ptr(projection));
-		glUniform3fv(3, 1, glm::value_ptr(cameraPos));
+		glUniformMatrix4fv(glGetUniformLocation(shader.ID, "V"), 1, GL_FALSE, glm::value_ptr(view));
+		glUniformMatrix4fv(glGetUniformLocation(shader.ID, "P"), 1, GL_FALSE, glm::value_ptr(projection));
+		glUniform3fv(glGetUniformLocation(shader.ID, "camPos"), 1, glm::value_ptr(cameraPos));
 
-		glUniformMatrix4fv(5, 1, GL_FALSE, glm::value_ptr(lightSpaceMatrix));
+		glUniformMatrix4fv(glGetUniformLocation(shader.ID, "lightSpaceMatrix"), 1, GL_FALSE, glm::value_ptr(lightSpaceMatrix));
+
+		GLint texSamplerLoc = glGetUniformLocation(shader.ID, "texSampler");
+		glUniform1i(texSamplerLoc, 0); // Map to texture unit 0
+
+		GLint normSamplerLoc = glGetUniformLocation(shader.ID, "normSampler");
+		glUniform1i(normSamplerLoc, 1); // Map to texture unit 1
+
+		GLint specSamplerLoc = glGetUniformLocation(shader.ID, "specSampler");
+		glUniform1i(specSamplerLoc, 2); // Map to texture unit 2
+
+		GLint shadowSamplerLoc = glGetUniformLocation(shader.ID, "shadowSampler");
+		glUniform1i(shadowSamplerLoc, 3); // Map to texture unit 3
+
 		glActiveTexture(GL_TEXTURE3);
 		glBindTexture(GL_TEXTURE_2D, depthMap);
 
-		renderNode(root);
+		renderNode(root, glGetUniformLocation(shader.ID, "M"), glGetUniformLocation(shader.ID, "type"));
 
 		glBindVertexArray(0);
 		glBindTexture(GL_TEXTURE_2D, 0);
@@ -275,23 +281,25 @@ int main()
 		glfwPollEvents();
 	}
 	std::cout << std::endl
-		<< "Terminating.."
-		<< std::endl;
+			  << "Terminating.."
+			  << std::endl;
 
 	// Terminate GLFW if we are done rendering
 	glfwTerminate();
 	return 0;
 }
 
-void setUniformBoneTransforms(std::vector<glm::mat4> transforms, unsigned int shaderId) {
-	for (int i = 0; i < transforms.size(); ++i) {
+void setUniformBoneTransforms(std::vector<glm::mat4> transforms, unsigned int shaderId)
+{
+	for (int i = 0; i < transforms.size(); ++i)
+	{
 		string boneStr = "boneTransforms[" + std::to_string(i) + "]";
 		int boneLocation = glGetUniformLocation(shaderId, boneStr.c_str());
 		glUniformMatrix4fv(boneLocation, 1, GL_FALSE, glm::value_ptr(transforms[i]));
 	}
 }
 
-void updateNodeTransformations(Node* node, glm::mat4 transformationThusFar)
+void updateNodeTransformations(Node *node, glm::mat4 transformationThusFar)
 {
 	glm::mat4 transformationMatrix =
 		glm::translate(node->position) *
@@ -304,62 +312,66 @@ void updateNodeTransformations(Node* node, glm::mat4 transformationThusFar)
 
 	node->currentTransformationMatrix = transformationThusFar * transformationMatrix;
 
-	for (Node* child : node->children)
+	for (Node *child : node->children)
 	{
 		updateNodeTransformations(child, node->currentTransformationMatrix);
 	}
 }
 
-void renderNode(Node* node)
+void renderNode(Node *node, unsigned int model_shader_location, unsigned int type_shader_location)
 {
-	glUniform1ui(4, node->type);
+	glUniform1ui(type_shader_location, node->type);
 	switch (node->type)
 	{
 	case CHARACTER:
 		for (unsigned int i = 0; i < node->VAOIndexCounts.size(); i++)
 			if (node->vertexArrayObjectIDs[i] != -1)
 			{
-				if (node->textureIDs[i] >= 0) {
+				if (node->textureIDs[i] >= 0)
+				{
 					glActiveTexture(GL_TEXTURE0);
 					glBindTexture(GL_TEXTURE_2D, node->textureIDs[i]);
 				}
 
-				if (node->normalMapIDs[i] >= 0) {
+				if (node->normalMapIDs[i] >= 0)
+				{
 					glActiveTexture(GL_TEXTURE1);
 					glBindTexture(GL_TEXTURE_2D, node->normalMapIDs[i]);
 				}
 
-				if (node->specularMapIDs[i] >= 0) {
+				if (node->specularMapIDs[i] >= 0)
+				{
 					glActiveTexture(GL_TEXTURE2);
 					glBindTexture(GL_TEXTURE_2D, node->specularMapIDs[i]);
 				}
 
-				glUniformMatrix4fv(0, 1, GL_FALSE, glm::value_ptr(node->currentTransformationMatrix));
+				glUniformMatrix4fv(model_shader_location, 1, GL_FALSE, glm::value_ptr(node->currentTransformationMatrix));
 				glBindVertexArray(node->vertexArrayObjectIDs[i]);
 				glDrawElements(GL_TRIANGLES, node->VAOIndexCounts[i], GL_UNSIGNED_INT, nullptr);
 			}
 		break;
 	case GEOMETRY:
-		for (unsigned int i = 0; i < node->VAOIndexCounts.size(); i++) {
-			glUniformMatrix4fv(0, 1, GL_FALSE, glm::value_ptr(node->currentTransformationMatrix));
+		for (unsigned int i = 0; i < node->VAOIndexCounts.size(); i++)
+		{
+			glUniformMatrix4fv(model_shader_location, 1, GL_FALSE, glm::value_ptr(node->currentTransformationMatrix));
 			glBindVertexArray(node->vertexArrayObjectIDs[i]);
 			glDrawElements(GL_TRIANGLES, node->VAOIndexCounts[i], GL_UNSIGNED_INT, nullptr);
 		}
 		break;
 	}
 
-	for (Node* child : node->children)
+	for (Node *child : node->children)
 	{
-		renderNode(child);
+		renderNode(child, model_shader_location, type_shader_location);
 	}
 }
 
-void framebuffer_size_callback(GLFWwindow* window, int width, int height)
+void framebuffer_size_callback(GLFWwindow *window, int width, int height)
 {
 	glViewport(0, 0, width, height);
 }
 
-void processInput(GLFWwindow* window, Animation* animations)
+void processInput(GLFWwindow *window, Animation *animations)
 {
 	if (glfwGetKey(window, GLFW_KEY_ESCAPE) == GLFW_PRESS)
 		glfwSetWindowShouldClose(window, true);
@@ -371,35 +383,40 @@ void processInput(GLFWwindow* window, Animation* animations)
 
 	bool idle = true;
 
-	if (glfwGetKey(window, GLFW_KEY_W) == GLFW_PRESS) {
+	if (glfwGetKey(window, GLFW_KEY_W) == GLFW_PRESS)
+	{
 		character->position.z += 0.75f * speed;
 		cameraPos.z += 0.75f * speed;
 		animator.playAnimation(&animations[1]);
 		idle = false;
-		//cameraPos += glm::normalize(glm::vec3(cameraFront.x, 0, cameraFront.z)) * speed;
+		// cameraPos += glm::normalize(glm::vec3(cameraFront.x, 0, cameraFront.z)) * speed;
 	}
-	else if (glfwGetKey(window, GLFW_KEY_S) == GLFW_PRESS) {
+	else if (glfwGetKey(window, GLFW_KEY_S) == GLFW_PRESS)
+	{
 		character->position.z -= 0.5f * speed;
 		cameraPos.z -= 0.5f * speed;
 		animator.playAnimation(&animations[4]);
 		idle = false;
-		//cameraPos -= glm::normalize(glm::vec3(cameraFront.x, 0, cameraFront.z)) * speed;
+		// cameraPos -= glm::normalize(glm::vec3(cameraFront.x, 0, cameraFront.z)) * speed;
 	}
-	else if (glfwGetKey(window, GLFW_KEY_A) == GLFW_PRESS) {
+	else if (glfwGetKey(window, GLFW_KEY_A) == GLFW_PRESS)
+	{
 		character->position.x += 0.75f * speed;
 		cameraPos.x += 0.75f * speed;
 		animator.playAnimation(&animations[3]);
 		idle = false;
-		//cameraPos -= glm::normalize(glm::cross(cameraFront, cameraUp)) * speed;
+		// cameraPos -= glm::normalize(glm::cross(cameraFront, cameraUp)) * speed;
 	}
-	else if (glfwGetKey(window, GLFW_KEY_D) == GLFW_PRESS) {
+	else if (glfwGetKey(window, GLFW_KEY_D) == GLFW_PRESS)
+	{
 		character->position.x -= 0.75f * speed;
 		cameraPos.x -= 0.75f * speed;
 		animator.playAnimation(&animations[2]);
 		idle = false;
-		//cameraPos += glm::normalize(glm::cross(cameraFront, cameraUp)) * speed;
+		// cameraPos += glm::normalize(glm::cross(cameraFront, cameraUp)) * speed;
 	}
-	else if (glfwGetKey(window, GLFW_KEY_SPACE) == GLFW_PRESS) {
+	else if (glfwGetKey(window, GLFW_KEY_SPACE) == GLFW_PRESS)
+	{
 		animator.playAnimation(&animations[5]);
 		idle = false;
 	}
@@ -409,12 +426,13 @@ void processInput(GLFWwindow* window, Animation* animations)
 		glfwSetInputMode(window, GLFW_CURSOR, GLFW_CURSOR_DISABLED);
 	}
 
-	if (idle) {
+	if (idle)
+	{
 		animator.playAnimation(&animations[0]);
 	}
 }
 
-void mouse_callback(GLFWwindow* window, double xpos, double ypos)
+void mouse_callback(GLFWwindow *window, double xpos, double ypos)
 {
 	if (firstMouse)
 	{

@@ -1,5 +1,15 @@
 Skeletal animation using C++ and OpenGL.
 
+## Fork notes
+
+This is a fork from <https://github.com/MathNuts/SkeletalAnimation> and a few changes were applied:
+
+- Backports OpenGL code from `4.6` to `4.1` to enable support for **macOS**
+  - Removes layouts from shader code since these are not yet available in 4.1
+  - Dynamically retrieves uniform and attribute locations
+
+Shadows, unfortunately, are still broken as of now.
+
 ## Why?
 
 I created this project in order to explore several aspects of OpenGL and 3D animation. This includes but is not limitied to: lighting, shadow maps, texturing, model loading, animations and skeletal representations.
