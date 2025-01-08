@@ -12,10 +12,10 @@ uniform vec3 camPos;
 uniform uint type;
 uniform mat4 lightSpaceMatrix;
 
-layout (binding = 0) uniform sampler2D texSampler;
-layout (binding = 1) uniform sampler2D normSampler;
-layout (binding = 2) uniform sampler2D specSampler;
-layout (binding = 3) uniform sampler2D shadowSampler;
+uniform sampler2D texSampler;
+uniform sampler2D normSampler;
+uniform sampler2D specSampler;
+uniform sampler2D shadowSampler;
 
 vec3 lightPos = vec3(0.0, 10.0, 20.0);
 

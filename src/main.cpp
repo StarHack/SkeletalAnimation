@@ -259,6 +259,18 @@ int main()
 		glActiveTexture(GL_TEXTURE3);
 		glBindTexture(GL_TEXTURE_2D, depthMap);
 
+		GLint texSamplerLoc = glGetUniformLocation(shader.ID, "texSampler");
+		glUniform1i(texSamplerLoc, 0); // Map to texture unit 0
+
+		GLint normSamplerLoc = glGetUniformLocation(shader.ID, "normSampler");
+		glUniform1i(normSamplerLoc, 1); // Map to texture unit 1
+
+		GLint specSamplerLoc = glGetUniformLocation(shader.ID, "specSampler");
+		glUniform1i(specSamplerLoc, 2); // Map to texture unit 2
+
+		GLint shadowSamplerLoc = glGetUniformLocation(shader.ID, "shadowSampler");
+		glUniform1i(shadowSamplerLoc, 3); // Map to texture unit 3
+
 		renderNode(root, glGetUniformLocation(shader.ID, "M"), glGetUniformLocation(shader.ID, "type"));
 
 		glBindVertexArray(0);
