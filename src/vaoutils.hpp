@@ -58,7 +58,7 @@ void computeTangentBasis(
 template <class T>
 unsigned int generateAttribute(const char *attributeName, unsigned int shaderID, int elementsPerEntry, std::vector<T> data, bool normalize, bool integer = false)
 {
-	int id = glGetUniformLocation(shaderID, attributeName);
+	int id = glGetAttribLocation(shaderID, attributeName);
 
 	unsigned int bufferID;
 	glGenBuffers(1, &bufferID);

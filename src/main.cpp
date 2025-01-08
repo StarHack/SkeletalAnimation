@@ -319,7 +319,7 @@ void updateNodeTransformations(Node *node, glm::mat4 transformationThusFar)
 
 void renderNode(Node *node, unsigned int model_shader_location, unsigned int type_shader_location)
 {
-	glUniform1ui(4, node->type);
+	glUniform1ui(type_shader_location, node->type);
 	switch (node->type)
 	{
 	case CHARACTER:
