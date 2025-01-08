@@ -1,11 +1,11 @@
 #version 410 core
-layout (location = 0) in vec3 aPos;
-layout (location = 5) in ivec4 boneIds; 
-layout (location = 6) in vec4 weights;
+in vec3 aPos;
+in ivec4 boneIds; 
+in vec4 weights;
 
 uniform mat4 lightSpaceMatrix;
 uniform mat4 model;
-layout (location = 4) uniform uint type;
+uniform uint type;
 
 const int MAX_BONES = 100;
 const int MAX_BONE_INFLUENCE = 4;

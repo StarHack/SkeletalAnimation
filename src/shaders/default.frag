@@ -9,7 +9,7 @@ in vec3 bitangents;
 out vec4 FragColor;
 
 uniform vec3 camPos;
-layout (location = 4) uniform uint type;
+uniform uint type;
 uniform mat4 lightSpaceMatrix;
 
 layout (binding = 0) uniform sampler2D texSampler;

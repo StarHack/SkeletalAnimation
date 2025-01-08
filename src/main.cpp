@@ -18,7 +18,7 @@
 void framebuffer_size_callback(GLFWwindow *window, int width, int height);
 void processInput(GLFWwindow *window, Animation *animations);
 void mouse_callback(GLFWwindow *window, double xpos, double ypos);
-void renderNode(Node *node, unsigned int model_shader_location);
+void renderNode(Node *node, unsigned int model_shader_location, unsigned int type_shader_location);
 void updateNodeTransformations(Node *node, glm::mat4 transformationThusFar);
 void setUniformBoneTransforms(std::vector<glm::mat4> transforms, unsigned int shaderId);
 
@@ -147,7 +147,10 @@ int main()
 	};
 	floorMesh.indices = {0, 1, 2, 2, 3, 0};
 
-	unsigned int floorVAO = generateBuffer(floorMesh);
+	Shader shader = Shader("../src/shaders/default.vert", "../src/shaders/default.frag");
+	Shader depthShader = Shader("../src/shaders/depth.vert", "../src/shaders/depth.frag");
+
+	unsigned int floorVAO = generateBuffer(floorMesh, shader.ID); // ???
 
 	checkerFloor->type = GEOMETRY;
 	checkerFloor->vertexArrayObjectIDs = {(int)floorVAO};
@@ -161,7 +164,7 @@ int main()
 
 	for (int i = 0; i < m.meshes.size(); i++)
 	{
-		unsigned int charVAO = generateBuffer(squareMeshes[i]);
+		unsigned int charVAO = generateBuffer(squareMeshes[i], shader.ID); // ???
 		character->vertexArrayObjectIDs.push_back(charVAO);
 		character->VAOIndexCounts.push_back(squareMeshes[i].indices.size());
 
@@ -180,9 +183,6 @@ int main()
 	Animation anim6(animFile6, &m);
 
 	Animation animations[] = {anim1, anim2, anim3, anim4, anim5, anim6};
-
-	Shader shader = Shader("../src/shaders/default.vert", "../src/shaders/default.frag");
-	Shader depthShader = Shader("../src/shaders/depth.vert", "../src/shaders/depth.frag");
 
 	// Render loop
 	float frameTime = 1.0f / FPS;
@@ -233,7 +233,7 @@ int main()
 		glViewport(0, 0, s_width, s_height);
 		glBindFramebuffer(GL_FRAMEBUFFER, depthFBO);
 		glClear(GL_DEPTH_BUFFER_BIT);
-		renderNode(root, glGetUniformLocation(depthShader.ID, "model"));
+		renderNode(root, glGetUniformLocation(depthShader.ID, "model"), glGetUniformLocation(depthShader.ID, "type"));
 		glBindFramebuffer(GL_FRAMEBUFFER, 0);
 
 		glCullFace(GL_BACK);
@@ -259,7 +259,7 @@ int main()
 		glActiveTexture(GL_TEXTURE3);
 		glBindTexture(GL_TEXTURE_2D, depthMap);
 
-		renderNode(root, glGetUniformLocation(shader.ID, "M"));
+		renderNode(root, glGetUniformLocation(shader.ID, "M"), glGetUniformLocation(shader.ID, "type"));
 
 		glBindVertexArray(0);
 		glBindTexture(GL_TEXTURE_2D, 0);
@@ -305,7 +305,7 @@ void updateNodeTransformations(Node *node, glm::mat4 transformationThusFar)
 	}
 }
 
-void renderNode(Node *node, unsigned int model_shader_location)
+void renderNode(Node *node, unsigned int model_shader_location, unsigned int type_shader_location)
 {
 	glUniform1ui(4, node->type);
 	switch (node->type)
@@ -349,7 +349,7 @@ void renderNode(Node *node, unsigned int model_shader_location)
 
 	for (Node *child : node->children)
 	{
-		renderNode(child, model_shader_location);
+		renderNode(child, model_shader_location, type_shader_location);
 	}
 }
 
